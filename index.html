@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finanças Smart - Full Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root { --bg: #0F172A; --card: #1E293B; --primary: #3B82F6; --success: #10B981; --danger: #EF4444; --text: #F8FAFC; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; }
+        #app { width: 100%; max-width: 500px; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+        .screen { display: none; }
+        .active { display: block; }
+        .card { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #334155; background: #0F172A; color: white; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 14px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 14px; transition: 0.2s; }
+        .btn-blue { background: var(--primary); color: white; }
+        .btn-green { background: var(--success); color: white; }
+        .btn-red { background: var(--danger); color: white; }
+        .btn-ghost { background: transparent; color: #94A3B8; text-decoration: underline; }
+        
+        .nav-bar { display: flex; justify-content: space-around; background: var(--card); padding: 10px; border-radius: 15px; margin-bottom: 20px; }
+        .nav-bar i { cursor: pointer; color: #94A3B8; padding: 10px; }
+        .nav-bar i.active-icon { color: var(--primary); border-bottom: 2px solid var(--primary); }
+
+        .history-item { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; border-bottom: 1px solid #334155; padding: 10px; color: var(--primary); font-size: 12px; }
+        td { padding: 10px; border-bottom: 1px solid #1e293b; font-size: 12px; }
+
+        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:100; justify-content:center; align-items:center; }
+        .modal-content { background: var(--card); padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div id="login-screen" class="screen active">
+        <center><i class="material-icons" style="font-size:80px; color:var(--primary); margin-top:50px;">account_balance_wallet</i><h1>Finanças Smart</h1></center>
+        <div class="card">
+            <input type="text" id="login-user" placeholder="Usuário">
+            <input type="password" id="login-pass" placeholder="Senha">
+            <button class="btn-blue" onclick="handleLogin()">ENTRAR</button>
+            <p id="login-error" style="color:var(--danger); font-size:12px; text-align:center;"></p>
+            <button class="btn-ghost" onclick="showScreen('register-screen')">Criar Conta / Esqueci Senha</button>
+        </div>
+    </div>
+
+    <div id="register-screen" class="screen">
+        <h2>Configurar Acesso</h2>
+        <div class="card">
+            <input type="text" id="reg-user" placeholder="Novo Usuário">
+            <input type="password" id="reg-pass" placeholder="Nova Senha">
+            <button class="btn-green" onclick="handleRegister()">SALVAR E VOLTAR</button>
+            <button class="btn-ghost" onclick="showScreen('login-screen')">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="main-screen" class="screen">
+        <div class="nav-bar">
+            <i class="material-icons active-icon" onclick="showScreen('main-screen')">home</i>
+            <i class="material-icons" onclick="showReports()">bar_chart</i>
+            <i class="material-icons" onclick="showScreen('cat-screen')">category</i>
+            <i class="material-icons" onclick="logout()">logout</i>
+        </div>
+        <div class="card">
+            <small>Saldo Total</small>
+            <h1 id="resumo-saldo">R$ 0,00</h1>
+            <div style="display:flex; justify-content:space-between; border-top:1px solid #334155; padding-top:10px;">
+                <span id="resumo-in" style="color:var(--success)">↑ R$ 0,00</span>
+                <span id="resumo-out" style="color:var(--danger)">↓ R$ 0,00</span>
+            </div>
+        </div>
+        <h3>Nova Transação</h3>
+        <input type="number" id="in-val" placeholder="Valor R$">
+        <input type="text" id="in-desc" placeholder="Descrição">
+        <select id="in-cat"></select>
+        <div style="display:flex; gap:10px">
+            <button class="btn-green" onclick="addTrans('in')">GANHO</button>
+            <button class="btn-red" onclick="addTrans('out')">GASTO</button>
+        </div>
+        <h3>Histórico</h3>
+        <div id="history-list"></div>
+    </div>
+
+    <div id="cat-screen" class="screen">
+        <header style="display:flex; align-items:center;"><i class="material-icons" onclick="showScreen('main-screen')" style="cursor:pointer; margin-right:15px;">arrow_back</i><h2>Categorias</h2></header>
+        <div class="card">
+            <input type="text" id="new-cat-name" placeholder="Nova Categoria">
+            <button class="btn-blue" onclick="addCategory()">ADICIONAR</button>
+        </div>
+        <div class="card"><div id="cat-list"></div></div>
+    </div>
+
+    <div id="report-screen" class="screen">
+        <header style="display:flex; align-items:center;"><i class="material-icons" onclick="showScreen('main-screen')" style="cursor:pointer; margin-right:15px;">arrow_back</i><h2>Relatórios</h2></header>
+        <select id="filtro-mes" onchange="updateReports()"></select>
+        <div class="card" style="position: relative; height:300px;">
+            <canvas id="chartCanvas"></canvas>
+        </div>
+        <h3 id="total-gasto-rel" style="color:var(--danger)">Total: R$ 0,00</h3>
+        <div class="card"><table><thead><tr><th>Desc.</th><th>Valor</th><th>Data</th></tr></thead><tbody id="table-body"></tbody></table></div>
+    </div>
+</div>
+
+<div id="modal">
+    <div class="modal-content">
+        <h3>Editar</h3>
+        <input type="number" id="edit-val"><input type="text" id="edit-desc"><select id="edit-cat"></select>
+        <button class="btn-blue" onclick="saveEdit()">SALVAR</button>
+        <button class="btn-red" onclick="deleteItem()">EXCLUIR</button>
+        <button class="btn-ghost" onclick="closeModal()">CANCELAR</button>
+    </div>
+</div>
+
+<script>
+    // Registro do Plugin de Labels para o Chart.js
+    Chart.register(ChartDataLabels);
+
+    let db = JSON.parse(localStorage.getItem('financas_full_v3')) || {
+        saldo: 0, receitas: 0, despesas: 0, historico: [],
+        categorias: ["Alimentação", "Transporte", "Lazer", "Saúde", "Salário"]
+    };
+
+    function save() { localStorage.setItem('financas_full_v3', JSON.stringify(db)); updateUI(); }
+
+    function recalcularTudo() {
+        db.saldo = 0; db.receitas = 0; db.despesas = 0;
+        db.historico.forEach(i => {
+            if(i.tipo === 'in') { db.saldo += i.valor; db.receitas += i.valor; }
+            else { db.saldo -= i.valor; db.despesas += i.valor; }
+        });
+        save();
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'cat-screen') renderCategories();
+    }
+
+    function handleLogin() {
+        const u = document.getElementById('login-user').value;
+        const p = document.getElementById('login-pass').value;
+        const uS = localStorage.getItem('user') || 'admin';
+        const pS = localStorage.getItem('pass') || '1234';
+        if(u === uS && p === pS) { showScreen('main-screen'); updateUI(); }
+        else { document.getElementById('login-error').innerText = "Usuário/Senha incorretos!"; }
+    }
+
+    function handleRegister() {
+        const u = document.getElementById('reg-user').value;
+        const p = document.getElementById('reg-pass').value;
+        if(u && p) { localStorage.setItem('user', u); localStorage.setItem('pass', p); showScreen('login-screen'); }
+    }
+
+    function logout() { showScreen('login-screen'); }
+
+    function renderCategories() {
+        const list = document.getElementById('cat-list');
+        list.innerHTML = db.categorias.map((c, i) => `
+            <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #334155;">
+                <span>${c}</span><i class="material-icons" style="color:var(--danger); cursor:pointer;" onclick="removeCategory(${i})">delete</i>
+            </div>
+        `).join('');
+        initSelects();
+    }
+
+    function addCategory() {
+        const n = document.getElementById('new-cat-name').value;
+        if(n && !db.categorias.includes(n)) { db.categorias.push(n); document.getElementById('new-cat-name').value=''; save(); renderCategories(); }
+    }
+
+    function removeCategory(i) { db.categorias.splice(i, 1); save(); renderCategories(); }
+
+    function initSelects() {
+        const o = db.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+        document.getElementById('in-cat').innerHTML = o;
+        document.getElementById('edit-cat').innerHTML = o;
+    }
+
+    function addTrans(tipo) {
+        const v = parseFloat(document.getElementById('in-val').value);
+        const d = document.getElementById('in-desc').value || "Sem nome";
+        const c = document.getElementById('in-cat').value;
+        if(!v) return;
+        const n = new Date();
+        db.historico.unshift({ tipo, valor: v, desc: d, categoria: c, data: n.toLocaleDateString('pt-BR'), mesAno: (n.getMonth()+1).toString().padStart(2,'0') + '/' + n.getFullYear() });
+        recalcularTudo();
+        document.getElementById('in-val').value = ''; document.getElementById('in-desc').value = '';
+    }
+
+    function updateUI() {
+        document.getElementById('resumo-saldo').innerText = db.saldo.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+        document.getElementById('resumo-in').innerText = "↑ " + db.receitas.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+        document.getElementById('resumo-out').innerText = "↓ " + db.despesas.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+        document.getElementById('history-list').innerHTML = db.historico.map((item, i) => `
+            <div class="history-item" onclick="openEdit(${i})">
+                <div><strong>${item.desc}</strong><br><small>${item.data} - ${item.categoria}</small></div>
+                <b style="color:${item.tipo==='in'?'var(--success)':'var(--danger)'}">${item.tipo==='in'?'+':'-'} ${item.valor.toFixed(2)}</b>
+            </div>
+        `).join('');
+        initSelects();
+    }
+
+    let editIdx = null;
+    function openEdit(i) {
+        editIdx = i; const item = db.historico[i];
+        document.getElementById('edit-val').value = item.valor;
+        document.getElementById('edit-desc').value = item.desc;
+        document.getElementById('edit-cat').value = item.categoria;
+        document.getElementById('modal').style.display = 'flex';
+    }
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+    function saveEdit() {
+        db.historico[editIdx].valor = parseFloat(document.getElementById('edit-val').value);
+        db.historico[editIdx].desc = document.getElementById('edit-desc').value;
+        db.historico[editIdx].categoria = document.getElementById('edit-cat').value;
+        recalcularTudo(); closeModal();
+    }
+    function deleteItem() { db.historico.splice(editIdx, 1); recalcularTudo(); closeModal(); }
+
+    let myChart = null;
+    function showReports() {
+        showScreen('report-screen');
+        const meses = [...new Set(db.historico.map(i => i.mesAno))];
+        document.getElementById('filtro-mes').innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
+        updateReports();
+    }
+
+    function updateReports() {
+        const mes = document.getElementById('filtro-mes').value;
+        const filtrados = db.historico.filter(i => i.mesAno === mes && i.tipo === 'out');
+        document.getElementById('table-body').innerHTML = filtrados.map(i => `<tr><td>${i.desc}</td><td style="color:var(--danger)">R$ ${i.valor.toFixed(2)}</td><td>${i.data}</td></tr>`).join('');
+        
+        const cats = {}; let total = 0;
+        filtrados.forEach(i => { cats[i.categoria] = (cats[i.categoria] || 0) + i.valor; total += i.valor; });
+        document.getElementById('total-gasto-rel').innerText = `Total Gasto: R$ ${total.toFixed(2)}`;
+
+        const ctx = document.getElementById('chartCanvas').getContext('2d');
+        if(myChart) myChart.destroy();
+        
+        myChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(cats),
+                datasets: [{ 
+                    data: Object.values(cats), 
+                    backgroundColor: ['#3B82F6', '#10B981', '#EF4444', '#F59E0B', '#8B5CF6', '#EC4899'] 
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'bottom', labels: { color: 'white' } },
+                    datalabels: {
+                        color: '#fff',
+                        font: { weight: 'bold', size: 12 },
+                        formatter: (value, ctx) => {
+                            let sum = 0;
+                            let dataArr = ctx.chart.data.datasets[0].data;
+                            dataArr.map(data => { sum += data; });
+                            let percentage = (value*100 / sum).toFixed(0)+"%";
+                            return ctx.chart.data.labels[ctx.dataIndex] + "\n" + percentage;
+                        },
+                        anchor: 'center',
+                        align: 'center',
+                    }
+                }
+            }
+        });
+    }
+    initSelects();
+</script>
+</body>
+</html>
