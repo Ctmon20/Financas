@@ -8,67 +8,53 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        :root { --bg: #0F172A; --card: #1E293B; --primary: #3B82F6; --success: #10B981; --danger: #EF4444; --text: #F8FAFC; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; }
+        :root { 
+            --bg: #0F172A; --card: #1E293B; --primary: #3B82F6; --success: #10B981; 
+            --danger: #EF4444; --text: #F8FAFC; --input-bg: #0F172A; --border: #334155;
+        }
+        :root[data-theme="light"] {
+            --bg: #F1F5F9; --card: #FFFFFF; --primary: #2563EB; --success: #059669; 
+            --danger: #DC2626; --text: #1E293B; --input-bg: #F8FAFC; --border: #CBD5E1;
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; transition: 0.3s; }
         #app { width: 100%; max-width: 500px; min-height: 100vh; padding: 20px; box-sizing: border-box; }
         .screen { display: none; }
         .active { display: block; }
-        .card { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #334155; background: #0F172A; color: white; box-sizing: border-box; font-size: 16px; }
+        .card { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text); box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 14px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 14px; transition: 0.2s; }
         .btn-blue { background: var(--primary); color: white; }
         .btn-green { background: var(--success); color: white; }
         .btn-red { background: var(--danger); color: white; }
         .btn-ghost { background: transparent; color: #94A3B8; text-decoration: underline; }
         
-        .nav-bar { display: flex; justify-content: space-around; background: var(--card); padding: 10px; border-radius: 15px; margin-bottom: 20px; }
+        .nav-bar { display: flex; justify-content: space-around; background: var(--card); padding: 10px; border-radius: 15px; margin-bottom: 20px; align-items: center; }
         .nav-bar i { cursor: pointer; color: #94A3B8; padding: 10px; }
         .nav-bar i.active-icon { color: var(--primary); border-bottom: 2px solid var(--primary); }
 
-        .history-item { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .history-item { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid var(--border); }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; border-bottom: 1px solid #334155; padding: 10px; color: var(--primary); font-size: 12px; }
-        td { padding: 10px; border-bottom: 1px solid #1e293b; font-size: 12px; }
+        th { text-align: left; border-bottom: 1px solid var(--border); padding: 10px; color: var(--primary); font-size: 12px; }
+        td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; }
 
-        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:100; justify-content:center; align-items:center; }
+        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center; }
         .modal-content { background: var(--card); padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <div id="login-screen" class="screen active">
-        <center><i class="material-icons" style="font-size:80px; color:var(--primary); margin-top:50px;">account_balance_wallet</i><h1>Finanças Smart</h1></center>
-        <div class="card">
-            <input type="text" id="login-user" placeholder="Usuário">
-            <input type="password" id="login-pass" placeholder="Senha">
-            <button class="btn-blue" onclick="handleLogin()">ENTRAR</button>
-            <p id="login-error" style="color:var(--danger); font-size:12px; text-align:center;"></p>
-            <button class="btn-ghost" onclick="showScreen('register-screen')">Criar Conta/Esqueci Senha</button>
-        </div>
-    </div>
-
-    <div id="register-screen" class="screen">
-        <h2>Configurar Acesso</h2>
-        <div class="card">
-            <input type="text" id="reg-user" placeholder="Novo Usuário">
-            <input type="password" id="reg-pass" placeholder="Nova Senha">
-            <button class="btn-green" onclick="handleRegister()">SALVAR E VOLTAR</button>
-            <button class="btn-ghost" onclick="showScreen('login-screen')">Cancelar</button>
-        </div>
-    </div>
-
-    <div id="main-screen" class="screen">
+    <div id="main-screen" class="screen active">
         <div class="nav-bar">
             <i class="material-icons active-icon" onclick="showScreen('main-screen')">home</i>
             <i class="material-icons" onclick="showReports()">bar_chart</i>
             <i class="material-icons" onclick="showScreen('cat-screen')">category</i>
-            <i class="material-icons" onclick="logout()">logout</i>
+            <i class="material-icons" id="theme-icon" onclick="toggleTheme()">dark_mode</i>
         </div>
         <div class="card">
             <small>Saldo Total</small>
             <h1 id="resumo-saldo">R$ 0,00</h1>
-            <div style="display:flex; justify-content:space-between; border-top:1px solid #334155; padding-top:10px;">
+            <div style="display:flex; justify-content:space-between; border-top:1px solid var(--border); padding-top:10px;">
                 <span id="resumo-in" style="color:var(--success)">↑ R$ 0,00</span>
                 <span id="resumo-out" style="color:var(--danger)">↓ R$ 0,00</span>
             </div>
@@ -116,13 +102,27 @@
 </div>
 
 <script>
-    // Registro do Plugin de Labels para o Chart.js
     Chart.register(ChartDataLabels);
 
     let db = JSON.parse(localStorage.getItem('financas_full_v3')) || {
         saldo: 0, receitas: 0, despesas: 0, historico: [],
         categorias: ["Alimentação", "Transporte", "Lazer", "Saúde", "Salário"]
     };
+
+    // --- Lógica de Tema ---
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const target = current === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', target);
+        localStorage.setItem('theme', target);
+        document.getElementById('theme-icon').innerText = target === 'light' ? 'light_mode' : 'dark_mode';
+        if(document.getElementById('report-screen').classList.contains('active')) updateReports();
+    }
+
+    // Carregar tema salvo
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('theme-icon').innerText = savedTheme === 'light' ? 'light_mode' : 'dark_mode';
 
     function save() { localStorage.setItem('financas_full_v3', JSON.stringify(db)); updateUI(); }
 
@@ -141,27 +141,10 @@
         if(id === 'cat-screen') renderCategories();
     }
 
-    function handleLogin() {
-        const u = document.getElementById('login-user').value;
-        const p = document.getElementById('login-pass').value;
-        const uS = localStorage.getItem('user') || 'admin';
-        const pS = localStorage.getItem('pass') || '1234';
-        if(u === uS && p === pS) { showScreen('main-screen'); updateUI(); }
-        else { document.getElementById('login-error').innerText = "Usuário/Senha incorretos!"; }
-    }
-
-    function handleRegister() {
-        const u = document.getElementById('reg-user').value;
-        const p = document.getElementById('reg-pass').value;
-        if(u && p) { localStorage.setItem('user', u); localStorage.setItem('pass', p); showScreen('login-screen'); }
-    }
-
-    function logout() { showScreen('login-screen'); }
-
     function renderCategories() {
         const list = document.getElementById('cat-list');
         list.innerHTML = db.categorias.map((c, i) => `
-            <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #334155;">
+            <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border);">
                 <span>${c}</span><i class="material-icons" style="color:var(--danger); cursor:pointer;" onclick="removeCategory(${i})">delete</i>
             </div>
         `).join('');
@@ -242,6 +225,8 @@
         const ctx = document.getElementById('chartCanvas').getContext('2d');
         if(myChart) myChart.destroy();
         
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+
         myChart = new Chart(ctx, {
             type: 'pie',
             data: {
@@ -255,7 +240,7 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: true, position: 'bottom', labels: { color: 'white' } },
+                    legend: { display: true, position: 'bottom', labels: { color: isLight ? '#1E293B' : 'white' } },
                     datalabels: {
                         color: '#fff',
                         font: { weight: 'bold', size: 12 },
@@ -266,14 +251,14 @@
                             let percentage = (value*100 / sum).toFixed(0)+"%";
                             return ctx.chart.data.labels[ctx.dataIndex] + "\n" + percentage;
                         },
-                        anchor: 'center',
-                        align: 'center',
+                        anchor: 'center', align: 'center',
                     }
                 }
             }
         });
     }
     initSelects();
+    updateUI();
 </script>
 </body>
 </html>
