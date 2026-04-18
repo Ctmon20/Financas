@@ -16,8 +16,10 @@
             --bg: #F1F5F9; --card: #FFFFFF; --primary: #2563EB; --success: #059669; 
             --danger: #DC2626; --text: #1E293B; --input-bg: #F8FAFC; --border: #CBD5E1;
         }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; transition: 0.3s; }
-        #app { width: 100%; max-width: 500px; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; transition: 0.3s; }
+        
+        #app { width: 100%; max-width: 500px; min-height: 100vh; padding: 20px; padding-bottom: 100px; box-sizing: border-box; }
+        
         .screen { display: none; }
         .active { display: block; }
         .card { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -39,6 +41,13 @@
 
         #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center; }
         .modal-content { background: var(--card); padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; }
+
+        #ad-footer {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: var(--card); border-top: 1px solid var(--border);
+            display: flex; justify-content: center; align-items: center;
+            padding: 10px 0; z-index: 99;
+        }
     </style>
 </head>
 <body>
@@ -101,6 +110,19 @@
     </div>
 </div>
 
+<div id="ad-footer">
+    <script type="text/javascript">
+        atOptions = {
+            'key' : '61c077b085b1b31be7abdf6e12f8df3c',
+            'format' : 'iframe',
+            'height' : 50,
+            'width' : 320,
+            'params' : {}
+        };
+    </script>
+    <script type="text/javascript" src="https://www.highperformanceformat.com/61c077b085b1b31be7abdf6e12f8df3c/invoke.js"></script>
+</div>
+
 <script>
     Chart.register(ChartDataLabels);
 
@@ -109,7 +131,6 @@
         categorias: ["Alimentação", "Transporte", "Lazer", "Saúde", "Salário"]
     };
 
-    // --- Lógica de Tema ---
     function toggleTheme() {
         const current = document.documentElement.getAttribute('data-theme');
         const target = current === 'light' ? 'dark' : 'light';
@@ -119,7 +140,6 @@
         if(document.getElementById('report-screen').classList.contains('active')) updateReports();
     }
 
-    // Carregar tema salvo
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     document.getElementById('theme-icon').innerText = savedTheme === 'light' ? 'light_mode' : 'dark_mode';
@@ -138,6 +158,8 @@
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.nav-bar i').forEach(i => i.classList.remove('active-icon'));
+        if(id === 'main-screen') document.querySelector('.nav-bar i:nth-child(1)').classList.add('active-icon');
         if(id === 'cat-screen') renderCategories();
     }
 
@@ -217,39 +239,29 @@
         const mes = document.getElementById('filtro-mes').value;
         const filtrados = db.historico.filter(i => i.mesAno === mes && i.tipo === 'out');
         document.getElementById('table-body').innerHTML = filtrados.map(i => `<tr><td>${i.desc}</td><td style="color:var(--danger)">R$ ${i.valor.toFixed(2)}</td><td>${i.data}</td></tr>`).join('');
-        
         const cats = {}; let total = 0;
         filtrados.forEach(i => { cats[i.categoria] = (cats[i.categoria] || 0) + i.valor; total += i.valor; });
         document.getElementById('total-gasto-rel').innerText = `Total Gasto: R$ ${total.toFixed(2)}`;
-
         const ctx = document.getElementById('chartCanvas').getContext('2d');
         if(myChart) myChart.destroy();
-        
         const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-
         myChart = new Chart(ctx, {
             type: 'pie',
             data: {
                 labels: Object.keys(cats),
-                datasets: [{ 
-                    data: Object.values(cats), 
-                    backgroundColor: ['#3B82F6', '#10B981', '#EF4444', '#F59E0B', '#8B5CF6', '#EC4899'] 
-                }]
+                datasets: [{ data: Object.values(cats), backgroundColor: ['#3B82F6', '#10B981', '#EF4444', '#F59E0B', '#8B5CF6', '#EC4899'] }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: true, maintainAspectRatio: false,
                 plugins: {
                     legend: { display: true, position: 'bottom', labels: { color: isLight ? '#1E293B' : 'white' } },
                     datalabels: {
-                        color: '#fff',
-                        font: { weight: 'bold', size: 12 },
+                        color: '#fff', font: { weight: 'bold', size: 12 },
                         formatter: (value, ctx) => {
                             let sum = 0;
                             let dataArr = ctx.chart.data.datasets[0].data;
                             dataArr.map(data => { sum += data; });
-                            let percentage = (value*100 / sum).toFixed(0)+"%";
-                            return ctx.chart.data.labels[ctx.dataIndex] + "\n" + percentage;
+                            return (value*100 / sum).toFixed(0)+"%";
                         },
                         anchor: 'center', align: 'center',
                     }
