@@ -18,7 +18,8 @@
         }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; transition: 0.3s; }
         
-        #app { width: 100%; max-width: 500px; min-height: 100vh; padding: 20px; padding-bottom: 100px; box-sizing: border-box; }
+        /* Ajuste do padding inferior para o novo anúncio menor */
+        #app { width: 100%; max-width: 500px; min-height: 100vh; padding: 20px; padding-bottom: 80px; box-sizing: border-box; }
         
         .screen { display: none; }
         .active { display: block; }
@@ -42,11 +43,12 @@
         #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:100; justify-content:center; align-items:center; }
         .modal-content { background: var(--card); padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; }
 
+        /* Rodapé de anúncio otimizado e menor */
         #ad-footer {
             position: fixed; bottom: 0; left: 0; width: 100%;
             background: var(--card); border-top: 1px solid var(--border);
             display: flex; justify-content: center; align-items: center;
-            padding: 10px 0; z-index: 99;
+            padding: 5px 0; z-index: 99;
         }
     </style>
 </head>
@@ -113,14 +115,14 @@
 <div id="ad-footer">
     <script type="text/javascript">
         atOptions = {
-            'key' : '61c077b085b1b31be7abdf6e12f8df3c',
+            'key' : '2a5e7302edec5e07fb8153e06aa96446',
             'format' : 'iframe',
             'height' : 50,
             'width' : 320,
             'params' : {}
         };
     </script>
-    <script type="text/javascript" src="https://www.highperformanceformat.com/61c077b085b1b31be7abdf6e12f8df3c/invoke.js"></script>
+    <script type="text/javascript" src="https://www.highperformanceformat.com/2a5e7302edec5e07fb8153e06aa96446/invoke.js"></script>
 </div>
 
 <script>
@@ -158,8 +160,6 @@
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        document.querySelectorAll('.nav-bar i').forEach(i => i.classList.remove('active-icon'));
-        if(id === 'main-screen') document.querySelector('.nav-bar i:nth-child(1)').classList.add('active-icon');
         if(id === 'cat-screen') renderCategories();
     }
 
