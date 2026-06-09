@@ -18,7 +18,7 @@
         }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; transition: 0.3s; }
         
-        #app { width: 100%; max-width: 500px; min-height: 100vh; padding: 20px; padding-bottom: 80px; box-sizing: border-box; }
+        #app { width: 100%; max-width: 500px; min-height: 100vh; padding: 20px; padding-bottom: 20px; box-sizing: border-box; }
         
         .screen { display: none; }
         .active { display: block; }
@@ -41,8 +41,6 @@
 
         #modal, #lang-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:200; justify-content:center; align-items:center; }
         .modal-content { background: var(--card); padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; }
-
-        #ad-footer { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: center; align-items: center; padding: 5px 0; z-index: 99; }
 
         .splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s ease; flex-direction: column; }
         .splash img { max-width: 100%; max-height: 100%; object-fit: contain; }
@@ -116,13 +114,6 @@
     </div>
 </div>
 
-<div id="ad-footer">
-    <script type="text/javascript">
-        atOptions = { 'key' : '2a5e7302edec5e07fb8153e06aa96446', 'format' : 'iframe', 'height' : 50, 'width' : 320, 'params' : {} };
-    </script>
-    <script type="text/javascript" src="https://www.highperformanceformat.com/2a5e7302edec5e07fb8153e06aa96446/invoke.js"></script>
-</div>
-
 <script>
     const translations = {
         'pt-BR': { saldo: "Saldo Total", nova: "Nova Transação", val: "Valor R$", desc: "Descrição", ganho: "GANHO", gasto: "GASTO", hist: "Histórico", cat: "Categorias", add: "ADICIONAR", rep: "Relatórios", thD: "Desc.", thV: "Valor", thDa: "Data", edit: "Editar", save: "SALVAR", del: "EXCLUIR", cancel: "CANCELAR", tot: "Total Gasto" },
@@ -167,27 +158,22 @@
     function initSelects() { const o = db.categorias.map(c => `<option value="${c}">${getTranslatedCat(c)}</option>`).join(''); document.getElementById('in-cat').innerHTML = o; document.getElementById('edit-cat').innerHTML = o; }
     function addTrans(tipo) { const v = parseFloat(document.getElementById('in-val').value); const d = document.getElementById('in-desc').value || "Sem nome"; const c = document.getElementById('in-cat').value; if(!v) return; const n = new Date(); db.historico.unshift({ tipo, valor: v, desc: d, categoria: c, data: n.toLocaleDateString('pt-BR'), mesAno: (n.getMonth()+1).toString().padStart(2,'0') + '/' + n.getFullYear() }); recalcularTudo(); document.getElementById('in-val').value = ''; document.getElementById('in-desc').value = ''; }
     function updateUI() {
-    const lang = localStorage.getItem('lang') || 'pt-BR';
-    // Define a moeda e a localidade baseadas no idioma escolhido
-    const currency = lang === 'en-US' ? 'USD' : 'BRL';
-    const locale = lang === 'en-US' ? 'en-US' : 'pt-BR';
-
-    // Aplica a formatação dinâmica
-    document.getElementById('resumo-saldo').innerText = db.saldo.toLocaleString(locale, { style: 'currency', currency: currency });
-    document.getElementById('resumo-in').innerText = "↑ " + db.receitas.toLocaleString(locale, { style: 'currency', currency: currency });
-    document.getElementById('resumo-out').innerText = "↓ " + db.despesas.toLocaleString(locale, { style: 'currency', currency: currency });
-    
-    document.getElementById('history-list').innerHTML = db.historico.map((item, i) => `
-        <div class="history-item" onclick="openEdit(${i})">
-            <div><strong>${item.desc}</strong><br><small>${item.data} - ${getTranslatedCat(item.categoria)}</small></div>
-            <b style="color:${item.tipo==='in'?'var(--success)':'var(--danger)'}">
-                ${item.tipo==='in'?'+':'-'} ${item.valor.toLocaleString(locale, { style: 'currency', currency: currency })}
-            </b>
-        </div>
-    `).join('');
-    
-    initSelects();
-}
+        const lang = localStorage.getItem('lang') || 'pt-BR';
+        const currency = lang === 'en-US' ? 'USD' : 'BRL';
+        const locale = lang === 'en-US' ? 'en-US' : 'pt-BR';
+        document.getElementById('resumo-saldo').innerText = db.saldo.toLocaleString(locale, { style: 'currency', currency: currency });
+        document.getElementById('resumo-in').innerText = "↑ " + db.receitas.toLocaleString(locale, { style: 'currency', currency: currency });
+        document.getElementById('resumo-out').innerText = "↓ " + db.despesas.toLocaleString(locale, { style: 'currency', currency: currency });
+        document.getElementById('history-list').innerHTML = db.historico.map((item, i) => `
+            <div class="history-item" onclick="openEdit(${i})">
+                <div><strong>${item.desc}</strong><br><small>${item.data} - ${getTranslatedCat(item.categoria)}</small></div>
+                <b style="color:${item.tipo==='in'?'var(--success)':'var(--danger)'}">
+                    ${item.tipo==='in'?'+':'-'} ${item.valor.toLocaleString(locale, { style: 'currency', currency: currency })}
+                </b>
+            </div>
+        `).join('');
+        initSelects();
+    }
     let editIdx = null; function openEdit(i) { editIdx = i; const item = db.historico[i]; document.getElementById('edit-val').value = item.valor; document.getElementById('edit-desc').value = item.desc; document.getElementById('edit-cat').value = item.categoria; document.getElementById('modal').style.display = 'flex'; }
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
     function saveEdit() { db.historico[editIdx].valor = parseFloat(document.getElementById('edit-val').value); db.historico[editIdx].desc = document.getElementById('edit-desc').value; db.historico[editIdx].categoria = document.getElementById('edit-cat').value; recalcularTudo(); closeModal(); }
